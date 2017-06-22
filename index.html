@@ -1,0 +1,101 @@
+<html>
+  <body>
+    <div class="seedCount"></div>
+    <input class="growth" placeholder="Growth speed (seconds)"/>
+    <input class="stages" placeholder="Number of growth stages"/>
+    <script src="script.js"></script>
+    <script>
+      var seeds = 1
+      var stages;
+      var growSpeed;
+      $(".seedCount").textContent = "Seeds: " + seeds
+
+      function Plant(x, y) {
+        this.startTime = Date.now()
+        this.stage = 0
+
+        if($(".stages").value) {
+          stages = $(".stages").value
+        }
+
+        var stageColors = transitionColorArr({
+          c1: "00FF00",
+          c2: "FFFF00",
+          steps: stages
+        })
+
+        this.totalStages = stages
+        $(".stages").value = ""
+        console.log(this.totalStages)
+        this.size = 15
+        this.maxHeight = this.size * 4
+
+        if($(".growth").value) {
+          growSpeed = $(".growth").value
+        }
+
+        this.growTime = growSpeed
+        $(".growth").value = ""
+        this.yieldMultiplier = Math.random()
+        this.yieldMax = this.totalStages
+        let plant = this
+        let plantBase = $("body").create("div")
+        plantBase.s({
+          position: "absolute",
+          border: "1px solid black"
+        })
+        plantBase.className = "plant"
+        plantBase.const = this
+        plantBase.move(x - this.size / 2, y - this.size / 2)
+        let sizeArr = []
+
+        for(var i = 1; i < this.totalStages + 1; i++) {
+          sizeArr.push(this.maxHeight * (i / this.totalStages))
+        }
+
+        this.grow = function(stage) {
+          //console.log("plant at stage " + (stage + 1))
+          plant.stage = stage
+          plant.currentYield = Math.round(((plant.stage + 1) / plant.totalStages) * plant.yieldMax * plant.yieldMultiplier)
+          plantBase.move(x - plant.size / 2, (y - plant.size / 2) - sizeArr[plant.stage - 1])
+
+          plantBase.s({
+            background: "#" + stageColors[plant.stage],
+            width: plant.size + "px",
+            height: sizeArr[plant.stage] + "px"
+          })
+        }
+
+        this.grow(0)
+
+        this.growLoop = function() {
+          if(plant.stage < plant.totalStages - 1 && plant.growLoop) {
+            plant.grow(plant.stage + 1)
+
+            setTimeout(plant.growLoop, plant.growTime * 1000)
+          }
+        }
+
+        setTimeout(this.growLoop, this.growTime * 1000)
+      }
+
+      document.onmousedown = function(e) {
+        if(e.target == $("body")) {
+          if(seeds >= 1) {
+            seeds--
+            $(".seedCount").textContent = "Seeds: " + seeds
+            new Plant(e.pageX, e.pageY)
+          }
+        }
+
+        else if(e.target.className == "plant") {
+          seeds += e.target.const.currentYield
+          delete e.target.const
+          e.target.remove()
+          $(".seedCount").textContent = "Seeds: " + seeds
+        }
+      }
+      
+    </script>
+  </body>
+</html>
